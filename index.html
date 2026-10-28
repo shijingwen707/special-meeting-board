@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>项目会议台账看板</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%231F4E79'/%3E%3Cpath d='M7 8.5h10M7 12h10M7 15.5h6' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#EEF2F7;
+    --panel:#ffffff;
+    --ink:#1B2A41;
+    --muted:#5B6B7E;
+    --navy:#1F4E79;
+    --navy-2:#2E6CA8;
+    --line:#D8E0EA;
+    --tag-navy:#E3EDF7;
+    --card:#F7F9FC;
+    --shadow:0 1px 2px rgba(20,40,70,.06),0 4px 14px rgba(20,40,70,.05);
+    --radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1400px;margin:0 auto;padding:20px 20px 32px}
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+  .title h1{font-size:24px;font-weight:700;letter-spacing:.5px}
+  .title p{font-size:13px;color:var(--muted);margin-top:4px}
+  .controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .ctrl-group{display:flex;align-items:center;gap:8px}
+  .ctrl-label{font-size:13px;color:var(--muted);white-space:nowrap}
+  .date-input{font:inherit;font-size:14px;color:var(--ink);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;min-width:150px;}
+  .seg{display:flex;background:#E3E9F1;border-radius:9px;padding:3px;gap:2px}
+  .seg button{font:inherit;font-size:13px;color:var(--muted);border:none;background:transparent;padding:6px 14px;border-radius:7px;cursor:pointer;transition:.15s;}
+  .seg button.active{background:#fff;color:var(--navy);font-weight:600;box-shadow:0 1px 2px rgba(20,40,70,.1)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font:inherit;font-size:12.5px;color:#3D4D5F;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px;}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:#9AA7B5}
+  .chip.active{border-color:var(--navy-2);background:var(--tag-navy);color:var(--navy);font-weight:600}
+  .chip.active .dot{background:var(--navy)}
+  .summary{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px 16px;margin-bottom:18px;box-shadow:var(--shadow);}
+  .summary .s-total{font-size:15px;font-weight:700;color:var(--navy)}
+  .summary .s-total b{font-size:22px;margin:0 2px}
+  .summary .s-item{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
+  .summary .s-item b{color:var(--ink)}
+  .bar{flex:1;min-width:120px;height:8px;background:#E3E9F1;border-radius:6px;overflow:hidden;display:flex}
+  .bar i{display:block;height:100%}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .proj{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;border-top:4px solid var(--c,#1F4E79);}
+  .proj-p1{--c:#1F4E79}
+  .proj-p1 .proj-head h2{color:#1F4E79}
+  .proj-p2{--c:#0F707A}
+  .proj-p2 .proj-head h2{color:#0F707A}
+  .proj-p3{--c:#2E7D4F}
+  .proj-p3 .proj-head h2{color:#2E7D4F}
+  .proj-p4{--c:#9A3B3B}
+  .proj-p4 .proj-head h2{color:#9A3B3B}
+  .proj-p1 .meeting{border-left-color:#1F4E79}
+  .proj-p2 .meeting{border-left-color:#0F707A}
+  .proj-p3 .meeting{border-left-color:#2E7D4F}
+  .proj-p4 .meeting{border-left-color:#9A3B3B}
+  .proj-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .proj-head h2{font-size:16px;font-weight:700;}
+  .proj-count{font-size:12.5px;color:var(--muted);background:#F0F3F8;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .proj-body{padding:12px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .meeting{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--navy-2);border-radius:8px;padding:11px 13px;}
+  .m-title{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:8px}
+  .m-meta{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--muted)}
+  .m-meta .row{display:flex;align-items:center;gap:7px}
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+  .tag{font-size:11.5px;padding:2px 8px;border-radius:6px;background:var(--tag-navy);color:var(--navy)}
+  .empty{font-size:12.5px;color:#99A5B3;text-align:center;padding:22px 6px;border:1px dashed var(--line);border-radius:8px}
+  @media (max-width:1180px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:stretch}.date-input{width:100%}.seg{width:100%}.seg button{flex:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="title">
+      <h1>重点项目会议台账</h1>
+      <p>四大专项 · 按时间与参会人查看各项目会议安排</p>
+    </div>
+    <div class="controls">
+      <div class="ctrl-group">
+        <span class="ctrl-label">日期</span>
+        <input class="date-input" type="date" id="dateInput" aria-label="选择日期">
+      </div>
+      <div class="seg" id="segTimes" role="tablist" aria-label="时间段筛选">
+        <button data-v="all" class="active" role="tab">全天</button>
+        <button data-v="am" role="tab">上午</button>
+        <button data-v="pm" role="tab">下午</button>
+      </div>
+    </div>
+  </header>
+  <div class="chips" id="chips" aria-label="参会人类型筛选"></div>
+  <div class="summary">
+    <div class="s-total">共 <b id="totalCount">0</b> 场会议</div>
+    <div class="s-item">覆盖 <b id="projCover">0</b> 个专项</div>
+    <div class="bar" id="distBar" aria-hidden="true"></div>
+  </div>
+  <main class="grid" id="grid"></main>
+</div>
+<script>
+(function(){
+  "use strict";
+  var PARTIES = [
+    {id:"lead", name:"集团处级领导"},
+    {id:"cons", name:"咨询公司"},
+    {id:"vendor", name:"厂商"},
+    {id:"center", name:"数字化中心"}
+  ];
+  var PROJ = [
+    {id:"p1", name:"穿透式监管"},
+    {id:"p2", name:"财务数字化转型"},
+    {id:"p3", name:"数据治理"},
+    {id:"p4", name:"合同项目供应链三系统"}
+  ];
+  var MEETINGS = [
+    {d:"2026-10-27", t:"09:30", p:"p1", room:"1905", title:"穿透式监管平台建设周例会", parties:["lead","vendor","center"]},
+    {d:"2026-10-27", t:"14:00", p:"p1", room:"1903", title:"穿透式监管需求评审会", parties:["lead","cons","vendor"]},
+    {d:"2026-10-28", t:"10:00", p:"p1", room:"1906", title:"穿透式监管系统联调会", parties:["vendor","center"]},
+    {d:"2026-10-27", t:"09:00", p:"p2", room:"1903", title:"财务共享中心方案汇报", parties:["lead","cons"]},
+    {d:"2026-10-27", t:"15:30", p:"p2", room:"1905", title:"财务数字化转型月度例会", parties:["lead","vendor","center"]},
+    {d:"2026-10-28", t:"09:30", p:"p2", room:"1906", title:"财务数智化蓝图评审会", parties:["lead","cons"]},
+    {d:"2026-10-27", t:"10:30", p:"p3", room:"1906", title:"主数据贯标启动会", parties:["lead","cons","vendor"]},
+    {d:"2026-10-28", t:"14:00", p:"p3", room:"1903", title:"数据治理标准评审会", parties:["lead","vendor","center"]},
+    {d:"2026-10-27", t:"14:30", p:"p4", room:"1903", title:"合同系统上线准备会", parties:["lead","vendor"]},
+    {d:"2026-10-28", t:"09:00", p:"p4", room:"1905", title:"供应链三系统推进协调会", parties:["lead","cons","vendor","center"]},
+    {d:"2026-10-28", t:"16:00", p:"p3", room:"1905", title:"数据中台技术选型评审", parties:["cons","center"]},
+    {d:"2026-10-27", t:"16:30", p:"p2", room:"1906", title:"财务指标口径对齐会", parties:["lead","vendor"]}
+  ];
+  var partyName = {};
+  PARTIES.forEach(function(x){partyName[x.id]=x.name;});
+  var state = {date:"2026-10-27", seg:"all", parties:{lead:true,cons:true,vendor:true,center:true}};
+  var el = {date:document.getElementById("dateInput"), seg:document.getElementById("segTimes"),
+            chips:document.getElementById("chips"), grid:document.getElementById("grid"),
+            total:document.getElementById("totalCount"), cover:document.getElementById("projCover"),
+            bar:document.getElementById("distBar")};
+  el.date.value = state.date;
+  PARTIES.forEach(function(p){
+    var b=document.createElement("button");
+    b.className="chip active"; b.dataset.id=p.id; b.setAttribute("aria-pressed","true");
+    b.innerHTML='<span class="dot"></span>'+p.name;
+    b.addEventListener("click",function(){
+      state.parties[p.id]=!state.parties[p.id];
+      b.classList.toggle("active",state.parties[p.id]);
+      b.setAttribute("aria-pressed",state.parties[p.id]);
+      render();
+    });
+    el.chips.appendChild(b);
+  });
+  el.seg.addEventListener("click",function(e){
+    var btn=e.target.closest("button"); if(!btn) return;
+    el.seg.querySelectorAll("button").forEach(function(x){x.classList.remove("active");});
+    btn.classList.add("active"); state.seg=btn.dataset.v; render();
+  });
+  el.date.addEventListener("change",function(){ state.date=el.date.value; render(); });
+  function inSeg(t){
+    var h=parseInt(t.slice(0,2),10);
+    if(state.seg==="am") return h<12;
+    if(state.seg==="pm") return h>=12;
+    return true;
+  }
+  function hasParty(ps){ return ps.some(function(p){return state.parties[p];}); }
+  function render(){
+    var rows = MEETINGS.filter(function(m){
+      if(m.d!==state.date) return false;
+      if(!inSeg(m.t)) return false;
+      if(!hasParty(m.parties)) return false;
+      return true;
+    });
+    el.total.textContent = rows.length;
+    var per={}; PROJ.forEach(function(p){per[p.id]=0;});
+    rows.forEach(function(m){per[m.p]++;});
+    var cover = PROJ.filter(function(p){return per[p.id]>0;}).length;
+    el.cover.textContent = cover;
+    var tot=rows.length||1;
+    var palette=["#1F4E79","#0F707A","#2E7D4F","#9A3B3B"];
+    var barHtml="";
+    PROJ.forEach(function(p,i){
+      var w=(per[p.id]/tot*100).toFixed(1);
+      barHtml+='<i style="width:'+w+'%;background:'+palette[i]+'"></i>';
+    });
+    el.bar.innerHTML=barHtml;
+    var html="";
+    PROJ.forEach(function(p,i){
+      var list=rows.filter(function(m){return m.p===p.id;});
+      html+='<section class="proj proj-'+p.id+'"><div class="proj-head"><h2>'+p.name+'</h2>'+
+            '<span class="proj-count">'+list.length+' 场</span></div><div class="proj-body">';
+      if(list.length===0){
+        html+='<div class="empty">该时间段暂无会议</div>';
+      }else{
+        list.slice().sort(function(a,b){return a.t.localeCompare(b.t);}).forEach(function(m){
+          var tags=m.parties.map(function(x){return '<span class="tag">'+partyName[x]+'</span>';}).join("");
+          html+='<div class="meeting"><div class="m-title">'+m.title+'</div>'+
+                '<div class="m-meta">'+
+                '<div class="row">'+m.t+'</div>'+
+                '<div class="row">'+m.room+' 会议室</div>'+
+                '</div><div class="tags">'+tags+'</div></div>';
+        });
+      }
+      html+='</div></section>';
+    });
+    el.grid.innerHTML=html;
+  }
+  render();
+})();
+</script>
+</body>
+</html>
